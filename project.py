@@ -43,8 +43,6 @@ if "orders" not in st.session_state:
     st.session_state.orders = []
 if "feedback" not in st.session_state:
     st.session_state.feedback = []
-if "inventory" not in st.session_state:
-    st.session_state.inventory = []
 if "customers" not in st.session_state:
     st.session_state.customers = {}
 
@@ -90,77 +88,63 @@ if menu_option == "About":
     )
 
 # Customer Order Process
-st.header("Place Your Order 📋")
-st.write("Browse through our menu and place your order!")
-
-# Display items with images and details
-for item_name, details in inventory.items():
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.image(details["image"], caption=item_name, width=150)
-    with col2:
-        st.write(f"**{item_name}**")
-        st.write(f"Price: ${details['price']:.2f}")
-        st.write(f"Stock Available: {details['stock']} cups")
-
-        # Allow customer to select size (small, medium, large)
-        size = st.selectbox("Select Size", ["Small", "Medium", "Large"], key=f"size_{item_name}")
-        add_ons = st.multiselect("Add-ons (Optional)", ["Extra Sugar", "Extra Milk", "Syrup", "Whipped Cream", "Vanilla Syrup", "Caramel Syrup", "Almond Milk"], key=f"addons_{item_name}")
-
-        # Allow user to select quantity
-        qty = st.number_input(f"Select Quantity for {item_name}", min_value=0, max_value=details["stock"], step=1, key=f"qty_{item_name}")
-
-        if st.button(f"Add {item_name} to Order", key=f"btn_{item_name}"):
-            if qty > 0:
-                order_id = str(uuid.uuid4())  # Generate unique order ID
-                prep_time = datetime.now() + timedelta(minutes=5)  # Set prep time
-                order = {
-                    "order_id": order_id,
-                    "item": item_name,
-                    "size": size,
-                    "addons": add_ons,
-                    "quantity": qty,
-                    "price": details["price"],
-                    "total": qty * details["price"],
-                    "prep_time": prep_time.strftime("%Y-%m-%d %H:%M:%S")
-                }
-                st.session_state.orders.append(order)
-                inventory[item_name]["stock"] -= qty  # Update stock
-                st.success(f"Order #{order_id} placed! Estimated pickup time: {prep_time.strftime('%H:%M:%S')}")
-            else:
-                st.warning(f"Please select a valid quantity for {item_name}.")
-
-# Generate Invoice
-def generate_invoice(order):
-    # Create PDF
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
+elif menu_option == "Customer Order":
+    st.header("Place Your Order 📋")
+    st.write("Browse through our menu and place your order!")
     
-    # Title
-    pdf.cell(200, 10, txt="Coffee Shop Invoice", ln=True, align='C')
-    
-    # Customer and order details
-    pdf.cell(200, 10, txt=f"Order ID: {order['order_id']}", ln=True, align='L')
-    pdf.cell(200, 10, txt=f"Item: {order['item']}", ln=True, align='L')
-    pdf.cell(200, 10, txt=f"Size: {order['size']}", ln=True, align='L')
-    pdf.cell(200, 10, txt=f"Add-ons: {', '.join(order['addons']) if order['addons'] else 'None'}", ln=True, align='L')
-    pdf.cell(200, 10, txt=f"Quantity: {order['quantity']}", ln=True, align='L')
-    pdf.cell(200, 10, txt=f"Total: ${order['total']:.2f}", ln=True, align='L')
-    pdf.cell(200, 10, txt=f"Preparation Time: {order['prep_time']}", ln=True, align='L')
-    
-    # Save PDF to a stream and return it
-    pdf.output("invoice.pdf")
-    return "invoice.pdf"
+    # Display items with images and details
+    for item_name, details in inventory.items():
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            st.image(details["image"], caption=item_name, width=400)  # Updated width to 150
+        with col2:
+            st.write(f"**{item_name}**")
+            st.write(f"Price: ${details['price']:.2f}")
+            st.write(f"Stock Available: {details['stock']} cups")
 
-# Display invoice button for the last order
-if st.session_state.orders:
-    last_order = st.session_state.orders[-1]
-    if st.button("Download Invoice"):
-        invoice_path = generate_invoice(last_order)
-        st.success("Invoice generated!")
-        with open(invoice_path, "rb") as f:
-            st.download_button("Download your invoice", data=f, file_name="invoice.pdf", mime="application/pdf")
+            # Allow customer to select size (small, medium, large)
+            size = st.selectbox("Select Size", ["Small", "Medium", "Large"], key=f"size_{item_name}")
+            add_ons = st.multiselect("Add-ons (Optional)", ["Extra Sugar", "Extra Milk", "Syrup","Whipped Cream","Vanilla Syrup","Caramel Syrup","Almond Milk",""], key=f"addons_{item_name}")
+
+            # Allow user to select quantity
+            qty = st.number_input(
+                f"Select Quantity for {item_name}",
+                min_value=0,
+                max_value=details["stock"],
+                step=1,
+                key=f"qty_{item_name}"
+            )
+
+            if st.button(f"Add {item_name} to Order", key=f"btn_{item_name}"):
+                if qty > 0:
+                    order_id = str(uuid.uuid4())  # Generate unique order ID
+                    prep_time = datetime.now() + timedelta(minutes=5)  # Set prep time
+                    order = {
+                        "order_id": order_id,
+                        "item": item_name,
+                        "size": size,
+                        "addons": add_ons,
+                        "quantity": qty,
+                        "price": details["price"],
+                        "total": qty * details["price"],
+                        "prep_time": prep_time.strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    st.session_state.orders.append(order)
+                    inventory[item_name]["stock"] -= qty  # Update stock
+                    st.success(f"Order #{order_id} placed! Estimated pickup time: {prep_time.strftime('%H:%M:%S')}")
+                else:
+                    st.warning(f"Please select a valid quantity for {item_name}.")
+
+    # Order History for Registered Customers
+    st.subheader("Order History")
+    customer_name = st.text_input("Enter your name (for repeat customers)")
+    if customer_name:
+        if customer_name in st.session_state.customers:
+            order_history = st.session_state.customers[customer_name]
+            st.write("Previous Orders:")
+            st.write(order_history)
+        else:
+            st.warning(f"No previous orders found for {customer_name}.")
 
 # Inventory Management
 elif menu_option == "Inventory Management":
@@ -226,6 +210,4 @@ elif menu_option == "Promotions & Discounts":
     - **Loyalty Program**: Get a free drink after every 10 purchases!
     - **Student Discount**: Show your student ID and get 10% off on all drinks.
     """)
-
-
 
