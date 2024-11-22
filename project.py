@@ -59,7 +59,14 @@ if menu_option == "About":
     st.header("About Starlit Sips Coffee Shop 🌟")
     st.write("""
     Welcome to **Starlit Sips**, a place where every cup of coffee tells a story.
-    
+
+    **Developed By**
+    1) Jayaraj A/L Sivakumar (21002538)
+    2) Chitra A/P Tamil Chelvan (21002368)
+    3) Mohamad Yazid Bin Mohd Rawi (22002584)
+    4) Wan Ilhan Haqeem Bin Wan Ahmad Idzham (20000503)
+    5) Sudeskh A/L N. Kumar(20002012)
+
     **Our Mission**:
     At Starlit Sips, we are committed to providing the finest quality coffee, crafted with care and passion. Our mission is to offer a warm and inviting atmosphere where you can enjoy freshly brewed coffee, delicious pastries, and a variety of beverages to suit every taste.
 
