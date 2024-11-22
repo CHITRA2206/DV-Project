@@ -95,7 +95,7 @@ elif menu_option == "Customer Order":
     for item_name, details in inventory.items():
         col1, col2 = st.columns([1, 2])
         with col1:
-            st.image(details["image"], caption=item_name, width=400)  # Updated width to 150
+            st.image(details["image"], caption=item_name, width=200)  # Updated width to 150
         with col2:
             st.write(f"**{item_name}**")
             st.write(f"Price: ${details['price']:.2f}")
