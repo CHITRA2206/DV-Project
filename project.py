@@ -3,7 +3,6 @@ import pandas as pd
 import altair as alt
 import uuid
 from datetime import datetime, timedelta
-from fpdf import FPDF
 
 # Set page configuration
 st.set_page_config(
