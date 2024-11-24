@@ -171,8 +171,7 @@ if menu_option == "Customer Order":
                         # Generate and show the invoice
                         generate_invoice(order, customer_name)
 
-# Display orders with status
-# Sales Report with More Graphs
+# Sales Report with Graphs
 if menu_option == "Sales Report":
     st.header("Sales Report 📊")
 
@@ -196,36 +195,36 @@ if menu_option == "Sales Report":
             color='item:N',
             tooltip=['item:N', 'total:Q']
         ).properties(
-            title="Total Sales per Item"
+            title="Total Sales Overview"
         )
         st.altair_chart(bar_chart, use_container_width=True)
 
-        # Sales by Cup Size (Pie Chart or Bar Chart)
-        if 'size' in orders_df.columns:
+        # Sales Distribution (Pie Chart)
+        if 'size' in orders_df.columns:  # Assuming "size" refers to another sales attribute
             sales_by_size_df = orders_df.groupby('size').agg({'total': 'sum'}).reset_index()
 
-            # Pie chart for sales by cup size
+            # Pie chart for distribution of sales
             pie_chart = alt.Chart(sales_by_size_df).mark_arc().encode(
                 theta='total:Q',
                 color='size:N',
                 tooltip=['size:N', 'total:Q']
             ).properties(
-                title="Sales by Cup Size"
+                title="Sales Distribution Overview"
             )
             st.altair_chart(pie_chart, use_container_width=True)
 
-            # Alternatively, a bar chart for sales by cup size
+            # Bar Chart: Revenue Contribution
             bar_chart_size = alt.Chart(sales_by_size_df).mark_bar().encode(
                 x='size:N',
                 y='total:Q',
                 color='size:N',
                 tooltip=['size:N', 'total:Q']
             ).properties(
-                title="Sales by Cup Size (Bar Chart)"
+                title="Total Revenue Contribution"
             )
             st.altair_chart(bar_chart_size, use_container_width=True)
 
-        # Sales by Item and Size (Stacked Bar Chart)
+        # Sales Breakdown by Item (Stacked Bar Chart)
         sales_by_item_size_df = orders_df.groupby(['item', 'size']).agg({'total': 'sum'}).reset_index()
 
         stacked_bar_chart = alt.Chart(sales_by_item_size_df).mark_bar().encode(
@@ -234,11 +233,11 @@ if menu_option == "Sales Report":
             color='size:N',
             tooltip=['item:N', 'size:N', 'total:Q']
         ).properties(
-            title="Sales by Item and Cup Size"
+            title="Detailed Sales Breakdown"
         )
         st.altair_chart(stacked_bar_chart, use_container_width=True)
 
-        # Average Sales by Size (Bar Chart)
+        # Average Order Value (Bar Chart)
         avg_sales_by_size_df = orders_df.groupby('size').agg({'total': 'mean'}).reset_index()
 
         avg_sales_bar_chart = alt.Chart(avg_sales_by_size_df).mark_bar().encode(
@@ -247,9 +246,10 @@ if menu_option == "Sales Report":
             color='size:N',
             tooltip=['size:N', 'total:Q']
         ).properties(
-            title="Average Sales per Cup Size"
+            title="Average Order Value Analysis"
         )
         st.altair_chart(avg_sales_bar_chart, use_container_width=True)
+
 
 
 
@@ -260,27 +260,28 @@ if menu_option == "Inventory Management":
 
     # Only show this section if user is admin
     admin_password = st.text_input("Enter Admin Password", type="password", key="admin_password")
-    
+
     # Check admin password
     if admin_password == "admin2024":  # A simple password check (use a more secure method in real apps)
-        
-        # To display updated inventory after each update
-        updated_inventory = inventory.copy()  # Create a copy to store updated inventory
-        
-        # Show inventory table
+
+        # Initialize session state for inventory if not already initialized
+        if "inventory" not in st.session_state:
+            st.session_state.inventory = inventory
+
+        # Display inventory table
         st.subheader("Current Inventory Stock")
         inventory_data = []
-        for item_name, details in updated_inventory.items():
+        for item_name, details in st.session_state.inventory.items():
             inventory_data.append([item_name, details["price"], details["stock"]])
-        
+
         inventory_df = pd.DataFrame(inventory_data, columns=["Item", "Price ($)", "Stock Available (cups)"])
         st.dataframe(inventory_df)
 
         # Section to update inventory
         st.subheader("Update Inventory")
-        
+
         # Update stock for each item
-        for item_name, details in updated_inventory.items():
+        for item_name, details in st.session_state.inventory.items():
             col1, col2 = st.columns([1, 2])
             with col1:
                 st.image(details["image"], caption=item_name, width=150)
@@ -291,13 +292,21 @@ if menu_option == "Inventory Management":
                 st.write(f"Ingredients: {', '.join(details['ingredients'].keys())}")
 
                 # Allow updating stock
-                new_stock = st.number_input(f"Update Stock for {item_name}", min_value=0, max_value=200, value=details["stock"], key=f"new_stock_{item_name}")
-                
+                new_stock = st.number_input(
+                    f"Update Stock for {item_name}", min_value=0, max_value=200, value=details["stock"], key=f"new_stock_{item_name}"
+                )
+
                 # Update stock when button clicked
                 if st.button(f"Update Stock for {item_name}"):
-                    updated_inventory[item_name]["stock"] = new_stock
-                    inventory[item_name]["stock"] = new_stock  # Update the original inventory
+                    st.session_state.inventory[item_name]["stock"] = new_stock
                     st.success(f"Updated stock for {item_name} to {new_stock} cups.")
+
+                    # Explicitly refresh inventory table by re-rendering
+                    inventory_data = []
+                    for item_name, details in st.session_state.inventory.items():
+                        inventory_data.append([item_name, details["price"], details["stock"]])
+                    inventory_df = pd.DataFrame(inventory_data, columns=["Item", "Price ($)", "Stock Available (cups)"])
+                    st.dataframe(inventory_df)
 
 # Admin Access for Promotions and Discounts
 if menu_option == "Promotions & Discounts":
